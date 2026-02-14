@@ -286,13 +286,26 @@
 
     btnRefresh.addEventListener('click', fetchSchedule);
 
-    (function initFromCache() {
-      try {
-        const raw = localStorage.getItem('cup_schedule_cache');
-        if (!raw) return;
-        const cached = JSON.parse(raw);
-        if (Array.isArray(cached) && cached.length > 0) renderTable(cached);
-      } catch (_) {}
+    (function initSchedule() {
+      const scheduleUrl = 'schedule.json';
+      fetch(scheduleUrl)
+        .then(function (res) {
+          if (!res.ok) throw new Error('Not found');
+          return res.json();
+        })
+        .then(function (data) {
+          const list = Array.isArray(data) ? data : (data && data.data != null ? data.data : []);
+          if (list.length > 0) renderTable(list);
+          else throw new Error('Empty');
+        })
+        .catch(function () {
+          try {
+            const raw = localStorage.getItem('cup_schedule_cache');
+            if (!raw) return;
+            const cached = JSON.parse(raw);
+            if (Array.isArray(cached) && cached.length > 0) renderTable(cached);
+          } catch (_) {}
+        });
     })();
   </script>
 </body>
