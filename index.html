@@ -269,6 +269,7 @@
         }
         const list = Array.isArray(data) ? data : (data.data != null ? data.data : []);
         renderTable(list);
+        localStorage.setItem('cup_schedule_cache', JSON.stringify(list));
       } catch (err) {
         // #region agent log
         fetch('http://127.0.0.1:7242/ingest/df955d71-8ea3-498b-9e20-43ed994afd94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:catch',message:'fetch error',data:{name:err.name,message:err.message,origin:location.origin},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
@@ -284,6 +285,15 @@
     }
 
     btnRefresh.addEventListener('click', fetchSchedule);
+
+    (function initFromCache() {
+      try {
+        const raw = localStorage.getItem('cup_schedule_cache');
+        if (!raw) return;
+        const cached = JSON.parse(raw);
+        if (Array.isArray(cached) && cached.length > 0) renderTable(cached);
+      } catch (_) {}
+    })();
   </script>
 </body>
 </html>
