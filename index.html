@@ -183,12 +183,18 @@
 
     async function fetchSchedule() {
       setLoading(true);
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/df955d71-8ea3-498b-9e20-43ed994afd94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:fetchSchedule',message:'fetch start',data:{origin:location.origin,hasWebhookUrl:!!WEBHOOK_URL},timestamp:Date.now(),hypothesisId:'D'})}).catch(()=>{});
+      // #endregion
       try {
         const res = await fetch(WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({})
         });
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/df955d71-8ea3-498b-9e20-43ed994afd94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:afterFetch',message:'fetch completed',data:{ok:res.ok,status:res.status},timestamp:Date.now(),hypothesisId:'B'})}).catch(()=>{});
+        // #endregion
         if (!res.ok) {
           throw new Error('Ошибка сети: ' + res.status + '. Проверьте URL webhook и подключение.');
         }
@@ -202,7 +208,13 @@
         const list = Array.isArray(data) ? data : (data.data != null ? data.data : []);
         renderTable(list);
       } catch (err) {
-        const msg = err.message || 'Не удалось загрузить расписание. Проверьте подключение и URL webhook.';
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/df955d71-8ea3-498b-9e20-43ed994afd94',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'index.html:catch',message:'fetch error',data:{name:err.name,message:err.message,origin:location.origin},timestamp:Date.now(),hypothesisId:'A'})}).catch(()=>{});
+        // #endregion
+        const isCorsOrNetwork = (err.message === 'Failed to fetch' || err.name === 'TypeError') && location.origin !== 'file://';
+        const msg = isCorsOrNetwork
+          ? 'Запрос заблокирован (CORS). В n8n в ноде «Respond to Webhook» добавьте заголовок ответа: Access-Control-Allow-Origin = ' + location.origin
+          : (err.message || 'Не удалось загрузить расписание. Проверьте подключение и URL webhook.');
         showToast(msg, true);
       } finally {
         setLoading(false);
