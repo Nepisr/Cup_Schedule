@@ -338,6 +338,18 @@
     });
 
     (function initSchedule() {
+      // Сначала кэш из последнего успешного webhook — иначе статичный schedule.json
+      // из репо всегда «перебивает» localStorage и показывает устаревшие даты.
+      try {
+        const raw = localStorage.getItem('cup_schedule_cache');
+        if (raw) {
+          const cached = JSON.parse(raw);
+          if (Array.isArray(cached) && cached.length > 0) {
+            renderTable(cached);
+            return;
+          }
+        }
+      } catch (_) {}
       const scheduleUrl = 'schedule.json';
       fetch(scheduleUrl)
         .then(function (res) {
@@ -349,14 +361,7 @@
           if (list.length > 0) renderTable(list);
           else throw new Error('Empty');
         })
-        .catch(function () {
-          try {
-            const raw = localStorage.getItem('cup_schedule_cache');
-            if (!raw) return;
-            const cached = JSON.parse(raw);
-            if (Array.isArray(cached) && cached.length > 0) renderTable(cached);
-          } catch (_) {}
-        });
+        .catch(function () {});
     })();
   </script>
 </body>
